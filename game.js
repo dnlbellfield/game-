@@ -54,14 +54,14 @@ falconSprite.onerror = () => {
   falconSpriteReady = false;
 };
 
-const treeSprite = new Image();
-let treeSpriteReady = false;
-treeSprite.src = 'tree.png';
-treeSprite.onload = () => {
-  treeSpriteReady = true;
+const treeBackgroundLayer = new Image();
+let treeBackgroundLayerReady = false;
+treeBackgroundLayer.src = 'tree-background-layer.png';
+treeBackgroundLayer.onload = () => {
+  treeBackgroundLayerReady = true;
 };
-treeSprite.onerror = () => {
-  treeSpriteReady = false;
+treeBackgroundLayer.onerror = () => {
+  treeBackgroundLayerReady = false;
 };
 
 const newTreeSprite = new Image();
@@ -84,6 +84,26 @@ multipleTreesSprite.onerror = () => {
   multipleTreesSpriteReady = false;
 };
 
+const cloudsSprite = new Image();
+let cloudsSpriteReady = false;
+cloudsSprite.src = 'clouds.png';
+cloudsSprite.onload = () => {
+  cloudsSpriteReady = true;
+};
+cloudsSprite.onerror = () => {
+  cloudsSpriteReady = false;
+};
+
+const sunSprite = new Image();
+let sunSpriteReady = false;
+sunSprite.src = 'sun_.png';
+sunSprite.onload = () => {
+  sunSpriteReady = true;
+};
+sunSprite.onerror = () => {
+  sunSpriteReady = false;
+};
+
 const bushSprite = new Image();
 let bushSpriteReady = false;
 bushSprite.src = 'bush.png';
@@ -103,6 +123,9 @@ const TARGET_FACTS = 10;
 const RUNNER_SPRITE_SCALE_MULTIPLIER = 2;
 const FACT_PICKUP_SCALE_MULTIPLIER = 1.5;
 const TREE_DENSITY_MULTIPLIER = 1.1;
+const RETRO_PIXEL_SIZE = 4;
+const TREE_VISUAL_SECONDS = 24;
+const BACKGROUND_TREE_VISUAL_SECONDS = 72;
 
 const baseWorldSpeed = 254;
 const gravity = 1900;
@@ -274,9 +297,9 @@ const sceneThemes = [
     trailTop: '#8e6a49',
     trailMid: '#744f37',
     trailBottom: '#5d3f2d',
-    frontTreeAlpha: 0.88,
-    backTreeAlpha: 0.52,
-    farTreeAlpha: 0.28,
+    frontTreeAlpha: 0.36,
+    backTreeAlpha: 0.22,
+    farTreeAlpha: 0.1,
   },
   {
     label: 'Mountain View',
@@ -298,9 +321,9 @@ const sceneThemes = [
     trailTop: '#9a7652',
     trailMid: '#7d5b3f',
     trailBottom: '#664834',
-    frontTreeAlpha: 0.62,
-    backTreeAlpha: 0.38,
-    farTreeAlpha: 0.18,
+    frontTreeAlpha: 0.28,
+    backTreeAlpha: 0.17,
+    farTreeAlpha: 0.08,
   },
   {
     label: 'Golden Canopy',
@@ -322,9 +345,9 @@ const sceneThemes = [
     trailTop: '#b07a4e',
     trailMid: '#8b5d3d',
     trailBottom: '#6d4732',
-    frontTreeAlpha: 0.65,
-    backTreeAlpha: 0.4,
-    farTreeAlpha: 0.19,
+    frontTreeAlpha: 0.3,
+    backTreeAlpha: 0.18,
+    farTreeAlpha: 0.08,
   },
   {
     label: 'Sunny Refuge',
@@ -346,9 +369,9 @@ const sceneThemes = [
     trailTop: '#a6774c',
     trailMid: '#83583b',
     trailBottom: '#654330',
-    frontTreeAlpha: 0.68,
-    backTreeAlpha: 0.42,
-    farTreeAlpha: 0.2,
+    frontTreeAlpha: 0.31,
+    backTreeAlpha: 0.19,
+    farTreeAlpha: 0.09,
   },
 ];
 
@@ -400,7 +423,7 @@ function blendThemes(themeA, themeB, amount) {
 function getSceneTheme() {
   const elapsed = GAME_SECONDS - timeLeft;
   const sceneLength = GAME_SECONDS / sceneThemes.length;
-  const transitionSpan = 5;
+  const transitionSpan = 9;
 
   for (let i = 0; i < sceneThemes.length; i += 1) {
     const boundary = sceneLength * (i + 1);
@@ -409,7 +432,8 @@ function getSceneTheme() {
 
     if (elapsed < boundary) {
       if (nextTheme && elapsed > boundary - transitionSpan) {
-        const amount = smoothStep((elapsed - (boundary - transitionSpan)) / transitionSpan);
+        const rawAmount = (elapsed - (boundary - transitionSpan)) / transitionSpan;
+        const amount = smoothStep(smoothStep(rawAmount));
         return blendThemes(currentTheme, nextTheme, amount);
       }
       return currentTheme;
@@ -898,68 +922,6 @@ function update(dt) {
   pulseTime += dt;
 }
 
-function drawRedwood(x, baseY, scale = 1, alpha = 1, lean = 0) {
-  const trunkW = 20 * scale;
-  const trunkH = 220 * scale;
-  const trunkTopX = x + lean * 10 * scale;
-  ctx.save();
-  ctx.globalAlpha = alpha;
-
-  const trunkGradient = ctx.createLinearGradient(x, baseY - trunkH, x, baseY);
-  trunkGradient.addColorStop(0, '#6d3428');
-  trunkGradient.addColorStop(0.3, '#84503a');
-  trunkGradient.addColorStop(0.7, '#6f3a2b');
-  trunkGradient.addColorStop(1, '#4b231c');
-  ctx.fillStyle = trunkGradient;
-  ctx.beginPath();
-  ctx.moveTo(x - trunkW / 2, baseY);
-  ctx.lineTo(trunkTopX - trunkW * 0.34, baseY - trunkH);
-  ctx.lineTo(trunkTopX + trunkW * 0.34, baseY - trunkH);
-  ctx.lineTo(x + trunkW / 2, baseY);
-  ctx.closePath();
-  ctx.fill();
-
-  for (let i = -3; i <= 3; i += 1) {
-    const stripeX = x + i * 3.5 * scale + lean * 3 * scale;
-    const stripeShade = i % 2 === 0 ? '#9a6444' : '#51271f';
-    ctx.fillStyle = stripeShade;
-    ctx.fillRect(stripeX, baseY - trunkH, 1.5 * scale, trunkH);
-  }
-
-  ctx.fillStyle = '#c08a62';
-  ctx.fillRect(x - 2 * scale, baseY - trunkH, 2 * scale, trunkH);
-
-  const canopyBaseY = baseY - trunkH + 26 * scale;
-  const foliageLayers = [
-    { width: 64, height: 42, offsetY: 0, color: '#1f4a30' },
-    { width: 52, height: 38, offsetY: -24, color: '#28553a' },
-    { width: 42, height: 34, offsetY: -46, color: '#2f6141' },
-    { width: 32, height: 28, offsetY: -66, color: '#3a714a' },
-    { width: 22, height: 22, offsetY: -84, color: '#4a8253' },
-  ];
-
-  foliageLayers.forEach((layer, index) => {
-    const layerY = canopyBaseY + layer.offsetY * scale;
-    const layerW = layer.width * scale;
-    const layerH = layer.height * scale;
-    const shift = lean * (index + 1) * 3 * scale;
-    ctx.fillStyle = layer.color;
-    ctx.beginPath();
-    ctx.moveTo(trunkTopX + shift, layerY - layerH);
-    ctx.lineTo(trunkTopX - layerW / 2 + shift, layerY);
-    ctx.quadraticCurveTo(trunkTopX + shift, layerY - layerH * 0.18, trunkTopX + layerW / 2 + shift, layerY);
-    ctx.closePath();
-    ctx.fill();
-  });
-
-  ctx.fillStyle = '#688f61';
-  ctx.beginPath();
-  ctx.ellipse(trunkTopX + lean * 10 * scale, canopyBaseY - 72 * scale, 8 * scale, 16 * scale, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
-}
-
 function drawFern(x, y, scale = 1, flip = 1) {
   ctx.save();
   ctx.translate(x, y);
@@ -997,23 +959,178 @@ function drawBirdSilhouette(x, y, scale = 1) {
   ctx.restore();
 }
 
-function drawCloud(x, y, scale = 1) {
-  const cloudGradient = ctx.createRadialGradient(x + 8 * scale, y - 8 * scale, 8, x, y, 50 * scale);
-  cloudGradient.addColorStop(0, '#ffffffee');
-  cloudGradient.addColorStop(1, '#dceeff9f');
-  ctx.fillStyle = cloudGradient;
-  ctx.beginPath();
-  ctx.arc(x, y, 20 * scale, 0, Math.PI * 2);
-  ctx.arc(x + 22 * scale, y - 8 * scale, 18 * scale, 0, Math.PI * 2);
-  ctx.arc(x + 42 * scale, y, 16 * scale, 0, Math.PI * 2);
-  ctx.fill();
+const cloudFrames = [
+  { x: 70, y: 92, w: 630, h: 228 },
+  { x: 785, y: 138, w: 610, h: 210 },
+  { x: 110, y: 374, w: 520, h: 210 },
+  { x: 700, y: 380, w: 470, h: 168 },
+  { x: 1110, y: 464, w: 360, h: 150 },
+  { x: 82, y: 700, w: 480, h: 165 },
+  { x: 682, y: 682, w: 570, h: 180 },
+];
+
+function drawCloud(x, y, scale = 1, frameIndex = 0, alpha = 0.42) {
+  if (!cloudsSpriteReady) {
+    return;
+  }
+
+  const frame = cloudFrames[frameIndex % cloudFrames.length];
+  const drawW = frame.w * scale;
+  const drawH = frame.h * scale;
+  const pulse = 0.55 + 0.45 * (Math.sin(pulseTime * 0.9 + frameIndex * 1.7) * 0.5 + 0.5);
+  const animatedAlpha = Math.min(1, alpha * (0.75 + pulse * 0.8));
+  ctx.save();
+  ctx.globalAlpha = animatedAlpha;
+  ctx.drawImage(cloudsSprite, frame.x, frame.y, frame.w, frame.h, x, y, drawW, drawH);
+  ctx.restore();
 }
 
-function drawForestSprite(image, x, baseY, width, height, alpha = 1) {
+function drawSunLayer() {
+  if (!sunSpriteReady) {
+    return;
+  }
+
+  const sourceX = 380;
+  const sourceY = 120;
+  const sourceW = 780;
+  const sourceH = 760;
+  const drawW = 180;
+  const drawH = 176;
+  const x = WIDTH - 310;
+  const y = 24;
+
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.drawImage(sunSprite, sourceX, sourceY, sourceW, sourceH, x, y, drawW, drawH);
+  ctx.restore();
+}
+
+function drawMountainLayer(baseY, peakHeight, speed, topColor, bottomColor, alpha = 1, phase = 0) {
+  const offset = (worldOffset * speed + phase) % WIDTH;
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.drawImage(image, x, baseY - height, width, height);
+  const mountainGradient = ctx.createLinearGradient(0, baseY - peakHeight, 0, baseY + 44);
+  mountainGradient.addColorStop(0, topColor);
+  mountainGradient.addColorStop(1, bottomColor);
+  ctx.fillStyle = mountainGradient;
+
+  for (let i = -1; i < 3; i += 1) {
+    const x = i * WIDTH - offset;
+    ctx.beginPath();
+    ctx.moveTo(x, baseY);
+    ctx.lineTo(x + 124, baseY - peakHeight * 0.62);
+    ctx.lineTo(x + 250, baseY - peakHeight * 0.3);
+    ctx.lineTo(x + 392, baseY - peakHeight);
+    ctx.lineTo(x + 548, baseY - peakHeight * 0.34);
+    ctx.lineTo(x + 710, baseY - peakHeight * 0.78);
+    ctx.lineTo(x + WIDTH, baseY - peakHeight * 0.28);
+    ctx.lineTo(x + WIDTH, GROUND_Y);
+    ctx.lineTo(x, GROUND_Y);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   ctx.restore();
+}
+
+function drawTreeBackgroundLayer() {
+  if (!treeBackgroundLayerReady) {
+    return;
+  }
+
+  const sourceX = 0;
+  const sourceY = 115;
+  const sourceW = 1536;
+  const sourceH = 770;
+  const layerH = 274;
+  const layerW = layerH * (sourceW / sourceH);
+  const layerStep = layerW * 0.82;
+  const baseY = 318;
+  const layerSpeed = (WIDTH + layerW) / (baseWorldSpeed * BACKGROUND_TREE_VISUAL_SECONDS);
+  const offset = (worldOffset * layerSpeed) % layerStep;
+
+  ctx.save();
+  ctx.globalAlpha = 1;
+  for (let i = -3; i < WIDTH / layerStep + 4; i += 1) {
+    const x = i * layerStep - offset;
+    ctx.drawImage(
+      treeBackgroundLayer,
+      sourceX,
+      sourceY,
+      sourceW,
+      sourceH,
+      x,
+      baseY - layerH,
+      layerW,
+      layerH
+    );
+  }
+
+  ctx.restore();
+}
+
+function drawTreeSpriteLayer(image, ready, theme, motionFactor, options) {
+  if (!ready) {
+    return;
+  }
+
+  const sourceW = 1024;
+  const sourceH = 1536;
+  // Foreground tree layers should remain temporally continuous across scene/theme changes.
+  // Use fixed layer parameters so no abrupt reseeding occurs at transition boundaries.
+  const spacing = options.spacing;
+  const baseY = options.baseY;
+  const alpha = options.alpha;
+  const maxHeight = options.height + Math.abs(options.heightJitter);
+  const maxWidth = maxHeight * (sourceW / sourceH);
+  const visualSeconds = options.visualSeconds || TREE_VISUAL_SECONDS;
+  const layerSpeed = (WIDTH + maxWidth) / (baseWorldSpeed * visualSeconds * motionFactor);
+  const offset = (worldOffset * layerSpeed * motionFactor + options.phase) % spacing;
+
+  ctx.save();
+  for (let i = -6; i < WIDTH / spacing + 8; i += 1) {
+    if (options.skipEvery && i % options.skipEvery === 0) {
+      continue;
+    }
+    const height = options.height + (i % 2 === 0 ? options.heightJitter : -options.heightJitter);
+    const width = height * (sourceW / sourceH);
+    const x = i * spacing + (options.xJitter || 0) - offset;
+    const entryStartX = WIDTH + 70;
+    const entryEndX = WIDTH - 140;
+    let entryFade = 1;
+    if (x > entryEndX) {
+      const t = (entryStartX - x) / (entryStartX - entryEndX);
+      entryFade = Math.max(0, Math.min(1, t));
+    }
+    ctx.globalAlpha = alpha * entryFade;
+    ctx.drawImage(image, 0, 0, sourceW, sourceH, x, baseY - height, width, height);
+  }
+  ctx.restore();
+}
+
+function drawTreeAccentLayers(theme, motionFactor) {
+  drawTreeSpriteLayer(multipleTreesSprite, multipleTreesSpriteReady, theme, motionFactor, {
+    visualSeconds: 96,
+    phase: 120,
+    spacing: 600,
+    baseY: 350,
+    alpha: 1,
+    height: 368,
+    heightJitter: 18,
+    xJitter: 0,
+  });
+
+  drawTreeSpriteLayer(newTreeSprite, newTreeSpriteReady, theme, motionFactor, {
+    visualSeconds: 100,
+    phase: 430,
+    spacing: 760,
+    baseY: 356,
+    alpha: 1,
+    height: 406,
+    heightJitter: 14,
+    xJitter: 0,
+  });
+
 }
 
 function drawBackground() {
@@ -1026,123 +1143,31 @@ function drawBackground() {
   ctx.fillStyle = skyGradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  const sunGradient = ctx.createRadialGradient(theme.sunX, theme.sunY, 14, theme.sunX, theme.sunY, 130);
-  sunGradient.addColorStop(0, theme.sunCore);
-  sunGradient.addColorStop(1, '#ffe6ad00');
-  ctx.fillStyle = sunGradient;
-  ctx.fillRect(620, -30, 280, 220);
+  const skyBloom = ctx.createLinearGradient(0, 0, 0, 180);
+  skyBloom.addColorStop(0, 'rgba(255, 248, 227, 0.08)');
+  skyBloom.addColorStop(0.55, 'rgba(255, 248, 227, 0.02)');
+  skyBloom.addColorStop(1, 'rgba(255, 248, 227, 0)');
+  ctx.fillStyle = skyBloom;
+  ctx.fillRect(0, 0, WIDTH, 180);
 
-  const hazeGradient = ctx.createLinearGradient(0, 100, 0, 280);
-  hazeGradient.addColorStop(0, theme.hazeTop);
-  hazeGradient.addColorStop(1, theme.hazeBottom);
-  ctx.fillStyle = hazeGradient;
-  ctx.fillRect(0, 90, WIDTH, 180);
+  drawSunLayer();
 
-  const fogBand = ctx.createLinearGradient(0, 150, 0, 250);
-  fogBand.addColorStop(0, 'rgba(222, 233, 219, 0)');
-  fogBand.addColorStop(0.55, 'rgba(222, 233, 219, 0.16)');
-  fogBand.addColorStop(1, 'rgba(222, 233, 219, 0)');
-  ctx.fillStyle = fogBand;
-  ctx.fillRect(0, 138, WIDTH, 120);
-
-  const cloudOffset = (worldOffset * 0.15 * motionFactor) % (WIDTH + 150);
-  drawCloud(120 - cloudOffset, 82, 1.25);
-  drawCloud(390 - cloudOffset, 66, 1.1);
-  drawCloud(770 - cloudOffset, 92, 1.35);
-  drawCloud(980 - cloudOffset, 72, 1.05);
+  const elapsedRatio = Math.max(0, Math.min(1, (GAME_SECONDS - timeLeft) / GAME_SECONDS));
+  const midSunStrength = Math.max(0, 1 - Math.abs(elapsedRatio - 0.5) / 0.32);
+  const cloudVisibilityFactor = 1 - midSunStrength * 0.7;
+  const cloudOffset = (worldOffset * 0.035 * motionFactor) % (WIDTH + 260);
+  drawCloud(80 - cloudOffset, 58, 0.34, 1, 0.62 * cloudVisibilityFactor);
+  drawCloud(420 - cloudOffset, 74, 0.28, 3, 0.54 * cloudVisibilityFactor);
+  drawCloud(790 - cloudOffset, 62, 0.32, 0, 0.58 * cloudVisibilityFactor);
+  drawCloud(1160 - cloudOffset, 78, 0.26, 4, 0.5 * cloudVisibilityFactor);
   drawBirdSilhouette(180 - cloudOffset * 0.3, 58, 0.8);
   drawBirdSilhouette(560 - cloudOffset * 0.2, 112, 0.65);
 
-  const mountainFarGradient = ctx.createLinearGradient(0, 140, 0, 248);
-  mountainFarGradient.addColorStop(0, theme.mountainFarTop);
-  mountainFarGradient.addColorStop(1, theme.mountainFarBottom);
-  ctx.fillStyle = mountainFarGradient;
-  ctx.beginPath();
-  ctx.moveTo(0, 232);
-  ctx.lineTo(90, 176);
-  ctx.lineTo(190, 214);
-  ctx.lineTo(305, 162);
-  ctx.lineTo(420, 220);
-  ctx.lineTo(560, 150);
-  ctx.lineTo(705, 216);
-  ctx.lineTo(860, 164);
-  ctx.lineTo(960, 220);
-  ctx.lineTo(960, 260);
-  ctx.lineTo(0, 260);
-  ctx.closePath();
-  ctx.fill();
+  drawMountainLayer(246, 92, 0.025 * motionFactor, theme.mountainFarTop, theme.mountainFarBottom, 0.78, 0);
+  drawMountainLayer(286, 76, 0.045 * motionFactor, theme.mountainNearTop, theme.mountainNearBottom, 0.86, 340);
 
-  const mountainNearGradient = ctx.createLinearGradient(0, 165, 0, 274);
-  mountainNearGradient.addColorStop(0, theme.mountainNearTop);
-  mountainNearGradient.addColorStop(1, theme.mountainNearBottom);
-  ctx.fillStyle = mountainNearGradient;
-  ctx.beginPath();
-  ctx.moveTo(0, 250);
-  ctx.lineTo(120, 196);
-  ctx.lineTo(245, 242);
-  ctx.lineTo(360, 186);
-  ctx.lineTo(520, 246);
-  ctx.lineTo(680, 188);
-  ctx.lineTo(840, 236);
-  ctx.lineTo(960, 204);
-  ctx.lineTo(960, 286);
-  ctx.lineTo(0, 286);
-  ctx.closePath();
-  ctx.fill();
-
-  const backFarSpacing = 150 / TREE_DENSITY_MULTIPLIER;
-  const treeOffsetBackFar = (worldOffset * 0.2 * motionFactor) % backFarSpacing;
-  for (let i = -2; i < 13; i += 1) {
-    drawRedwood(i * backFarSpacing + 30 - treeOffsetBackFar, 238, 0.95, theme.farTreeAlpha, i % 2 === 0 ? -0.12 : 0.08);
-  }
-
-  const backSpacing = 126 / TREE_DENSITY_MULTIPLIER;
-  const treeOffsetBack = (worldOffset * 0.35 * motionFactor) % backSpacing;
-  for (let i = -2; i < 15; i += 1) {
-    drawRedwood(i * backSpacing + 40 - treeOffsetBack, 250, 1.18, theme.backTreeAlpha, i % 3 === 0 ? -0.1 : 0.06);
-  }
-
-  const frontSpacing = 102 / TREE_DENSITY_MULTIPLIER;
-  const treeOffsetFront = (worldOffset * 0.55 * motionFactor) % frontSpacing;
-  for (let i = -2; i < 18; i += 1) {
-    drawRedwood(i * frontSpacing + 18 - treeOffsetFront, 270, 1.28, theme.frontTreeAlpha, i % 2 === 0 ? 0.08 : -0.06);
-  }
-
-  if (treeSpriteReady || newTreeSpriteReady || multipleTreesSpriteReady) {
-    const singleTreeSpacing = 188 / TREE_DENSITY_MULTIPLIER;
-    const singleTreeOffset = (worldOffset * 0.48 * motionFactor) % singleTreeSpacing;
-    const singleTreeAlpha = theme.sceneKey === 'grove' ? 0.72 : theme.sceneKey === 'mountain' ? 0.46 : 0.3;
-    const singleTreeWidth = theme.sceneKey === 'grove' ? 126 : 108;
-    const singleTreeHeight = theme.sceneKey === 'grove' ? 212 : 184;
-    const baseY = theme.sceneKey === 'grove' ? 278 : 270;
-    const clusterOffsets = [
-      { x: -44, y: 6, scale: 0.94, alpha: 0.74 },
-      { x: -8, y: -4, scale: 1.02, alpha: 1 },
-      { x: 30, y: 4, scale: 0.9, alpha: 0.78 },
-    ];
-    for (let i = -2; i < 11; i += 1) {
-      const clusterX = i * singleTreeSpacing + 24 - singleTreeOffset;
-      clusterOffsets.forEach((offset) => {
-        const useNewTree = newTreeSpriteReady && i % 4 === 0 && offset.scale >= 1;
-        const treeImage = useNewTree
-          ? newTreeSprite
-          : multipleTreesSpriteReady
-            ? multipleTreesSprite
-            : treeSprite;
-        if (!treeImage) {
-          return;
-        }
-        drawForestSprite(
-          treeImage,
-          clusterX + offset.x,
-          baseY + offset.y,
-          singleTreeWidth * offset.scale,
-          singleTreeHeight * offset.scale,
-          singleTreeAlpha * offset.alpha
-        );
-      });
-    }
-  }
+  drawTreeBackgroundLayer();
+  drawTreeAccentLayers(theme, motionFactor);
 
   const meadowGradient = ctx.createLinearGradient(0, GROUND_Y, 0, HEIGHT);
   meadowGradient.addColorStop(0, theme.meadowTop);
@@ -1150,12 +1175,13 @@ function drawBackground() {
   ctx.fillStyle = meadowGradient;
   ctx.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
 
-  const stripOffset = worldOffset % 40;
+  const stripOffset = Math.floor(worldOffset % 40);
   for (let i = -40; i < WIDTH + 40; i += 40) {
-    ctx.fillStyle = '#648944';
-    ctx.fillRect(i - stripOffset, GROUND_Y + 14, 24, 2);
-    ctx.fillStyle = '#88ae60';
-    ctx.fillRect(i - stripOffset + 10, GROUND_Y + 20, 20, 2);
+    const stripX = Math.round((i - stripOffset) / RETRO_PIXEL_SIZE) * RETRO_PIXEL_SIZE;
+    ctx.fillStyle = '#4f733e';
+    ctx.fillRect(stripX, GROUND_Y + 12, 24, 3);
+    ctx.fillStyle = '#91b965';
+    ctx.fillRect(stripX + 12, GROUND_Y + 22, 20, 3);
   }
 
   const trailShadow = ctx.createLinearGradient(0, BRIDGE_TOP - 4, 0, BRIDGE_TOP + 44);
@@ -1175,6 +1201,10 @@ function drawBackground() {
   ctx.fillRect(0, BRIDGE_TOP + 2, WIDTH, 2);
   ctx.fillStyle = '#65472f';
   ctx.fillRect(0, BRIDGE_TOP + 20, WIDTH, 2);
+  ctx.fillStyle = 'rgba(44, 29, 18, 0.24)';
+  for (let y = BRIDGE_TOP + 6; y < BRIDGE_TOP + 38; y += 8) {
+    ctx.fillRect(0, y, WIDTH, 2);
+  }
 
   const edgeOffset = worldOffset % 52;
   for (let i = -52; i < WIDTH + 52; i += 52) {
@@ -1199,6 +1229,45 @@ function drawBackground() {
     const fernBaseX = (i * 108 - (worldOffset * 0.9) % 108) - 10;
     drawFern(fernBaseX, GROUND_Y + 4, 0.95, i % 2 === 0 ? 1 : -1);
   }
+}
+
+function drawIntroLeaves() {
+  if (gameState !== 'playing') {
+    return;
+  }
+
+  const elapsed = GAME_SECONDS - timeLeft;
+  if (elapsed < 0 || elapsed > 3) {
+    return;
+  }
+
+  const fade = 1 - elapsed / 3;
+  const leafCount = 44;
+  ctx.save();
+  ctx.globalAlpha = 1 * fade;
+
+  for (let i = 0; i < leafCount; i += 1) {
+    const lane = i / leafCount;
+    const sway = Math.sin((pulseTime * 2.8) + i * 1.13) * 24;
+    const fall = ((elapsed * 180 + i * 34) % (HEIGHT + 100)) - 60;
+    const drift = (worldOffset * 0.12 + i * 67) % (WIDTH + 140);
+    const x = WIDTH - drift + sway;
+    const y = Math.max(-24, Math.min(HEIGHT - 8, fall + lane * 18));
+    const w = i % 3 === 0 ? 17 : 13;
+    const h = i % 2 === 0 ? 9 : 7;
+    const rot = Math.sin((pulseTime * 3.2) + i * 0.8) * 0.7;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.fillStyle = i % 4 === 0 ? 'rgba(210, 162, 62, 1)' : 'rgba(138, 176, 68, 1)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.restore();
 }
 
 function drawFactPickups() {
@@ -1563,6 +1632,7 @@ function drawHud() {
 
 function draw() {
   drawBackground();
+  drawIntroLeaves();
   drawWaterHazards();
   drawFactPickups();
   drawRunner();
