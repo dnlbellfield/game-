@@ -114,6 +114,16 @@ bushSprite.onerror = () => {
   bushSpriteReady = false;
 };
 
+const puddleSprite = new Image();
+let puddleSpriteReady = false;
+puddleSprite.src = 'puddle.png';
+puddleSprite.onload = () => {
+  puddleSpriteReady = true;
+};
+puddleSprite.onerror = () => {
+  puddleSpriteReady = false;
+};
+
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
 const GROUND_Y = 344;
@@ -126,7 +136,6 @@ const TREE_DENSITY_MULTIPLIER = 1.1;
 const RETRO_PIXEL_SIZE = 4;
 const TREE_VISUAL_SECONDS = 24;
 const BACKGROUND_TREE_VISUAL_SECONDS = 72;
-
 const baseWorldSpeed = 254;
 const gravity = 1900;
 const jumpForce = 680;
@@ -658,14 +667,21 @@ function setupLevel() {
     }
   });
 
-  const hazardTimes = [7.2, 15.4, 24.8, 31.6];
-  hazardTimes.forEach((timeOffset, index) => {
+  const hazardSchedule = [
+    { time: 7.2, type: 'puddle' },
+    { time: 15.4, type: 'puddle' },
+    { time: 24.8, type: 'puddle' },
+    { time: 31.6, type: 'puddle' },
+  ];
+  hazardSchedule.forEach((entry, index) => {
+    const isPuddle = entry.type === 'puddle';
+    const isBush = entry.type === 'bush';
     waterHazards.push({
-      type: index === 1 ? 'creek' : 'bush',
-      x: hazardEncounterX + getDistanceForTime(timeOffset),
-      y: index === 1 ? BRIDGE_TOP + 4 : BRIDGE_TOP - 32,
-      w: index === 1 ? 82 : 92,
-      h: index === 1 ? 30 : 78,
+      type: entry.type,
+      x: hazardEncounterX + getDistanceForTime(entry.time),
+      y: isPuddle ? BRIDGE_TOP + 5 : isBush ? BRIDGE_TOP - 42 : BRIDGE_TOP - 32,
+      w: isPuddle ? 117 : isBush ? 102 : 92,
+      h: isPuddle ? 37 : isBush ? 86 : 78,
       active: true,
       triggered: false,
       ripplePhase: index * 0.8,
@@ -903,7 +919,7 @@ function update(dt) {
       slug.vy = -320;
       slug.onGround = false;
       statusEl.textContent =
-        hazard.type === 'creek'
+        hazard.type === 'puddle'
           ? `Splash! ${unlockedFacts.length}/${TARGET_FACTS} facts found.`
           : `Bump! ${unlockedFacts.length}/${TARGET_FACTS} facts found.`;
     }
@@ -1231,45 +1247,6 @@ function drawBackground() {
   }
 }
 
-function drawIntroLeaves() {
-  if (gameState !== 'playing') {
-    return;
-  }
-
-  const elapsed = GAME_SECONDS - timeLeft;
-  if (elapsed < 0 || elapsed > 3) {
-    return;
-  }
-
-  const fade = 1 - elapsed / 3;
-  const leafCount = 44;
-  ctx.save();
-  ctx.globalAlpha = 1 * fade;
-
-  for (let i = 0; i < leafCount; i += 1) {
-    const lane = i / leafCount;
-    const sway = Math.sin((pulseTime * 2.8) + i * 1.13) * 24;
-    const fall = ((elapsed * 180 + i * 34) % (HEIGHT + 100)) - 60;
-    const drift = (worldOffset * 0.12 + i * 67) % (WIDTH + 140);
-    const x = WIDTH - drift + sway;
-    const y = Math.max(-24, Math.min(HEIGHT - 8, fall + lane * 18));
-    const w = i % 3 === 0 ? 17 : 13;
-    const h = i % 2 === 0 ? 9 : 7;
-    const rot = Math.sin((pulseTime * 3.2) + i * 0.8) * 0.7;
-
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rot);
-    ctx.fillStyle = i % 4 === 0 ? 'rgba(210, 162, 62, 1)' : 'rgba(138, 176, 68, 1)';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  ctx.restore();
-}
-
 function drawFactPickups() {
   for (const fact of factPickups) {
     if (!fact.active) {
@@ -1338,36 +1315,29 @@ function drawWaterHazards() {
       continue;
     }
 
-    const ripple = Math.sin(pulseTime * 5 + hazard.x * 0.03) * 1.5;
-    const bankHeight = 5;
+    if (hazard.type === 'puddle') {
+      if (puddleSpriteReady) {
+        ctx.save();
+        ctx.globalAlpha = 0.96;
+        ctx.drawImage(puddleSprite, hazard.x - 9, hazard.y - 5, hazard.w + 17, hazard.h + 10);
+        ctx.restore();
+      } else {
+        const shimmer = Math.sin(pulseTime * 4 + hazard.x * 0.02) * 2;
+        const puddleGradient = ctx.createLinearGradient(hazard.x, hazard.y, hazard.x, hazard.y + hazard.h);
+        puddleGradient.addColorStop(0, '#9fd4f5');
+        puddleGradient.addColorStop(0.55, '#5ca5d3');
+        puddleGradient.addColorStop(1, '#2d6f9c');
+        ctx.fillStyle = puddleGradient;
+        ctx.beginPath();
+        ctx.ellipse(hazard.x + hazard.w * 0.5, hazard.y + hazard.h * 0.56, hazard.w * 0.5, hazard.h * 0.45, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(228, 245, 255, 0.6)';
+        ctx.fillRect(hazard.x + 18, hazard.y + 10 + shimmer, hazard.w - 44, 3);
+      }
+      continue;
+    }
 
-    ctx.fillStyle = '#6f5339';
-    ctx.beginPath();
-    ctx.roundRect(hazard.x - 8, hazard.y - 3, hazard.w + 16, hazard.h + 6, 8);
-    ctx.fill();
-
-    ctx.fillStyle = '#7da35c';
-    ctx.fillRect(hazard.x - 6, hazard.y - bankHeight, hazard.w + 12, bankHeight);
-    ctx.fillRect(hazard.x - 6, hazard.y + hazard.h, hazard.w + 12, bankHeight);
-
-    const waterGradient = ctx.createLinearGradient(hazard.x, hazard.y, hazard.x, hazard.y + hazard.h);
-    waterGradient.addColorStop(0, '#a8dceb');
-    waterGradient.addColorStop(0.38, '#66b8d1');
-    waterGradient.addColorStop(1, '#2d7890');
-    ctx.fillStyle = waterGradient;
-    ctx.beginPath();
-    ctx.roundRect(hazard.x, hazard.y, hazard.w, hazard.h, 6);
-    ctx.fill();
-
-    ctx.fillStyle = 'rgba(231, 249, 255, 0.78)';
-    ctx.fillRect(hazard.x + 10, hazard.y + 6 + ripple, hazard.w - 20, 2);
-    ctx.fillRect(hazard.x + 16, hazard.y + 15 - ripple, hazard.w - 32, 2);
-    ctx.fillRect(hazard.x + 22, hazard.y + 22 + ripple * 0.6, hazard.w - 44, 2);
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-    ctx.beginPath();
-    ctx.roundRect(hazard.x + 4, hazard.y + 3, hazard.w - 8, hazard.h * 0.45, 5);
-    ctx.fill();
+    continue;
   }
 }
 
@@ -1632,7 +1602,6 @@ function drawHud() {
 
 function draw() {
   drawBackground();
-  drawIntroLeaves();
   drawWaterHazards();
   drawFactPickups();
   drawRunner();
