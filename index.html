@@ -8,62 +8,91 @@
   </head>
   <body>
     <main class="game-shell">
-      <h1>Trail Adventure</h1>
-      <p class="intro">
-        Guide your forest friend down a redwood trail and discover 10 redwood and wildlife facts.
-      </p>
-      <section class="friend-picker" aria-label="Choose a forest friend">
-        <p class="picker-label">Choose your forest friend</p>
-        <div class="friend-buttons">
-          <button class="friend-button is-active" type="button" data-runner="slug">
-            <img class="friend-icon" src="slug.png" alt="" />
-            <span>Banana Slug</span>
-          </button>
-          <button class="friend-button" type="button" data-runner="bobcat">
-            <img class="friend-icon" src="bob-cat.png" alt="" />
-            <span>Bobcat</span>
-          </button>
-          <button class="friend-button" type="button" data-runner="falcon">
-            <img class="friend-icon" src="falcon.png" alt="" />
-            <span>Peregrine Falcon</span>
-          </button>
-          <button class="friend-button" type="button" data-runner="woodrat">
-            <img class="friend-icon" src="ducky-footed-woodrat.png" alt="" />
-            <span>Dusky-footed Woodrat</span>
-          </button>
-        </div>
-      </section>
-      <div class="start-row">
-        <button id="startButton" class="start-button" type="button">Start</button>
-        <!-- <p class="controls">Start with <strong>Space</strong> or the button. Jump with <strong>Space</strong>, <strong>W</strong>, or <strong>↑</strong></p> -->
-      </div>
+       <h1>Trail Adventure</h1>
+<p class="intro">
+  Guide your forest friend down a redwood trail and discover 10 redwood and
+  wildlife facts.
+</p>
+
+<section class="friend-picker" aria-label="Choose a forest friend">
+  <p class="picker-label">Choose your forest friend</p>
+  <div class="friend-buttons">
+    <button
+      class="friend-button is-active"
+      type="button"
+      data-runner="slug"
+      aria-pressed="true"
+    >
+      <img class="friend-icon" src="banana_slug.png" alt="" />
+      <span>Banana Slug</span>
+    </button>
+    <button
+      class="friend-button"
+      type="button"
+      data-runner="bobcat"
+      aria-pressed="false"
+    >
+      <img class="friend-icon" src="bob-cat.png" alt="" />
+      <span>Bobcat</span>
+    </button>
+    <button
+      class="friend-button"
+      type="button"
+      data-runner="falcon"
+      aria-pressed="false"
+    >
+      <img class="friend-icon" src="falcon.png" alt="" />
+      <span>Peregrine Falcon</span>
+    </button>
+    <button
+      class="friend-button"
+      type="button"
+      data-runner="woodrat"
+      aria-pressed="false"
+    >
+      <img class="friend-icon" src="ducky-footed-woodrat.png" alt="" />
+      <span>Dusky-footed Woodrat</span>
+    </button>
+  </div>
+</section>
+
+<p id="runnerChip" class="runner-chip" hidden>
+  Playing as <strong>Banana Slug</strong>
+</p>
+
+<div class="start-row">
+  <button id="startButton" class="start-button" type="button">
+    Start
+  </button>
+</div>
+ 
       <div class="game-stage">
         <canvas id="game" width="960" height="430" aria-label="Side scroller game"></canvas>
         <button id="jumpButton" class="jump-button" type="button">Tap to Jump</button>
-        <section id="endSummary" class="end-summary" hidden aria-live="polite">
-          <div class="end-summary-dialog">
-            <p class="end-summary-kicker">Thank you for playing</p>
-            <div class="fact-slider">
-              <button id="factPrevButton" class="fact-nav-button" type="button" aria-label="Previous fact">←</button>
-              <article id="factSlide" class="fact-card fact-slide"></article>
-              <button id="factNextButton" class="fact-nav-button" type="button" aria-label="Next fact">→</button>
-            </div>
-            <p id="factSlideCounter" class="fact-slide-counter"></p>
-            <div class="end-actions">
-              <a
-                id="donateButton"
-                class="donate-button"
-                href="https://secure.sempervirens.org/a/26sa?sourceid=1058222&ms=26SW100_A&_gl=1*1yf3w3f*_gcl_aw*R0NMLjE3NzkxNDE2NTMuQ2p3S0NBanc4YXJRQmhCOUVpd0FmSUtkUXQzSEkwQjBvREpuSUZ6WkRBb1h6M2FSUzhzYnpxcEp4N2ZsTE1BYnRVc204SVV0Y0o2ODR4b0M4MUlRQXZEX0J3RQ..*_gcl_au*MTY1Mjk0NDcxOS4xNzc5MTQxMjQ2*_ga*MTQxNTA2Nzg2Ny4xNzc5MTQxMjQ2*_ga_FHZ7YP5Z06*czE3NzkxNDEyNDYkbzEkZzEkdDE3NzkxNDE5MDIkajU5JGwwJGgw"
-                target="_blank"
-                rel="noopener noreferrer"
-              >Donate Now</a>
-              <button id="playAgainButton" class="play-again-button" type="button">Play Again</button>
-            </div>
-          </div>
-        </section>
       </div>
       <p id="status" class="status">Choose your forest friend, then press Start or Spacebar.</p>
     </main>
+    <section id="endSummary" class="end-summary" hidden aria-live="polite" aria-modal="true" role="dialog">
+      <div class="end-summary-dialog">
+        <p class="end-summary-kicker">Thank you for playing</p>
+        <div class="fact-slider">
+          <button id="factPrevButton" class="fact-nav-button" type="button" aria-label="Previous fact">←</button>
+          <article id="factSlide" class="fact-card fact-slide"></article>
+          <button id="factNextButton" class="fact-nav-button" type="button" aria-label="Next fact">→</button>
+        </div>
+        <p id="factSlideCounter" class="fact-slide-counter"></p>
+        <div class="end-actions">
+          <a
+            id="donateButton"
+            class="donate-button"
+            href="https://secure.sempervirens.org/a/26sa?sourceid=1058222&ms=26SW100_A&_gl=1*1yf3w3f*_gcl_aw*R0NMLjE3NzkxNDE2NTMuQ2p3S0NBanc4YXJRQmhCOUVpd0FmSUtkUXQzSEkwQjBvREpuSUZ6WkRBb1h6M2FSUzhzYnpxcEp4N2ZsTE1BYnRVc204SVV0Y0o2ODR4b0M4MUlRQXZEX0J3RQ..*_gcl_au*MTY1Mjk0NDcxOS4xNzc5MTQxMjQ2*_ga*MTQxNTA2Nzg2Ny4xNzc5MTQxMjQ2*_ga_FHZ7YP5Z06*czE3NzkxNDEyNDYkbzEkZzEkdDE3NzkxNDE5MDIkajU5JGwwJGgw"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Donate Now</a>
+          <button id="playAgainButton" class="play-again-button" type="button">Play Again</button>
+        </div>
+      </div>
+    </section>
     <script src="game.js"></script>
   </body>
 </html>

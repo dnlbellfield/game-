@@ -5,15 +5,26 @@
   --bg-glow: #2f7758;
   --brand-green: #004f2f;
   --brand-red: #cc4c28;
-  --panel: linear-gradient(180deg, rgba(0, 79, 47, 0.82) 0%, rgba(36, 63, 52, 0.9) 100%);
+  --panel: linear-gradient(
+    180deg,
+    rgba(0, 79, 47, 0.82) 0%,
+    rgba(36, 63, 52, 0.9) 100%
+  );
   --panel-border: rgba(0, 79, 47, 0.34);
   --text-main: #f5ecd7;
-  --text-soft: #4f5f54;
+  --text-soft: #3f5046;
   --accent: #cc4c28;
   --accent-2: #004f2f;
   --trail: #7a583a;
   --wood: #9d7454;
   --moss: #7ba85c;
+  --ui-font:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --title-font: Georgia, "Times New Roman", serif;
+  --border-soft: rgba(0, 79, 47, 0.18);
+  --border-medium: rgba(0, 79, 47, 0.32);
+  --surface-soft: rgba(0, 79, 47, 0.06);
+  --surface-active: rgba(204, 76, 40, 0.12);
 }
 
 * {
@@ -27,22 +38,27 @@
 body {
   margin: 0;
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  font-family: Georgia, "Times New Roman", serif;
-  background: #F6EFDB;
+  display: block;
+  padding: 28px 18px 36px;
+  font-family: var(--ui-font);
+  background: #f6efdb;
   color: var(--text-main);
 }
 
 .game-shell {
   text-align: center;
-  width: min(1040px, 100%);
-  padding: 22px;
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 24px 28px 26px;
   border: 2px solid rgba(0, 79, 47, 0.28);
   border-radius: 28px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.46) 0%, rgba(255, 250, 238, 0.92) 18%, rgba(243, 236, 216, 0.98) 100%);
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.46) 0%,
+      rgba(255, 250, 238, 0.92) 18%,
+      rgba(243, 236, 216, 0.98) 100%
+    );
   box-shadow:
     0 22px 50px rgba(0, 79, 47, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -64,16 +80,18 @@ a {
 
 h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3.1rem);
+  font-family: var(--title-font);
+  font-size: clamp(2rem, 3.2vw, 2.85rem);
   letter-spacing: 0.03em;
   color: var(--brand-green);
 }
 
 .intro {
-  max-width: 680px;
-  margin: 10px auto 14px;
+  max-width: 720px;
+  margin: 6px auto 12px;
   color: var(--text-soft);
-  line-height: 1.45;
+  line-height: 1.4;
+  font-size: 1rem;
 }
 
 .meta-row {
@@ -105,22 +123,29 @@ h1 {
   justify-content: center;
   gap: 14px;
   flex-wrap: wrap;
-  margin: 0 0 14px;
+  margin: 0 0 12px;
 }
 
 .start-button {
-  padding: 11px 18px;
+  min-width: 168px;
+  padding: 11px 22px;
   border: 2px solid rgba(0, 79, 47, 0.32);
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(0, 79, 47, 0.9), rgba(32, 107, 72, 0.92));
+  background: linear-gradient(
+    180deg,
+    rgba(0, 79, 47, 0.92),
+    rgba(32, 107, 72, 0.94)
+  );
   color: #fffdf6;
   font: inherit;
-  font-weight: 700;
+  font-family: var(--ui-font);
+  font-weight: 800;
   cursor: pointer;
   transition:
     transform 140ms ease,
     box-shadow 140ms ease,
-    border-color 140ms ease;
+    border-color 140ms ease,
+    background 140ms ease;
   box-shadow: 0 12px 24px rgba(0, 79, 47, 0.2);
 }
 
@@ -133,13 +158,14 @@ h1 {
 }
 
 .friend-picker {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
 }
 
 .picker-label {
   margin: 0 0 8px;
   color: var(--brand-green);
   font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .friend-buttons {
@@ -150,6 +176,7 @@ h1 {
 }
 
 .friend-button {
+  min-height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -160,11 +187,14 @@ h1 {
   background: rgba(0, 79, 47, 0.06);
   color: var(--brand-green);
   font: inherit;
+  font-family: var(--ui-font);
+  font-weight: 700;
   cursor: pointer;
   transition:
     transform 140ms ease,
     background 140ms ease,
-    border-color 140ms ease;
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .friend-icon {
@@ -186,14 +216,66 @@ h1 {
 }
 
 .friend-button.is-active {
-  background: linear-gradient(180deg, rgba(204, 76, 40, 0.14), rgba(0, 79, 47, 0.12));
-  border-color: rgba(204, 76, 40, 0.7);
+  background: linear-gradient(
+    180deg,
+    rgba(204, 76, 40, 0.15),
+    rgba(0, 79, 47, 0.1)
+  );
+  border-color: rgba(204, 76, 40, 0.72);
   color: var(--brand-green);
+  box-shadow: 0 8px 18px rgba(204, 76, 40, 0.08);
+}
+
+.runner-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 7px 13px;
+  border: 1px solid rgba(0, 79, 47, 0.18);
+  border-radius: 999px;
+  background: rgba(0, 79, 47, 0.07);
+  color: var(--brand-green);
+  font-family: var(--ui-font);
+  font-size: 0.92rem;
+}
+
+.runner-chip strong {
+  color: var(--brand-red);
+}
+
+.game-shell.is-countdown .intro,
+.game-shell.is-playing .intro,
+.game-shell.is-countdown .friend-picker,
+.game-shell.is-playing .friend-picker {
+  display: none;
+}
+
+.game-shell.is-countdown .runner-chip,
+.game-shell.is-playing .runner-chip,
+.game-shell.is-paused .runner-chip,
+.game-shell.is-finished .runner-chip {
+  display: inline-flex;
+}
+
+.game-shell.is-countdown h1,
+.game-shell.is-playing h1,
+.game-shell.is-paused h1,
+.game-shell.is-finished h1 {
+  font-size: clamp(1.6rem, 2.4vw, 2.25rem);
+  margin-bottom: 6px;
+}
+
+.game-shell.is-countdown .start-row,
+.game-shell.is-playing .start-row,
+.game-shell.is-paused .start-row {
+  margin-bottom: 8px;
 }
 
 .game-stage {
   position: relative;
-  width: min(960px, 95vw);
+  width: min(920px, 100%);
   margin: 0 auto;
 }
 
@@ -211,10 +293,12 @@ canvas {
 }
 
 .status {
-  margin-top: 12px;
+  margin-top: 10px;
   min-height: 1.2em;
   color: var(--brand-red);
-  font-size: 1rem;
+  font-family: var(--ui-font);
+  font-size: 0.98rem;
+  font-weight: 700;
 }
 
 .jump-button {
@@ -227,24 +311,29 @@ canvas {
   padding: 13px 18px;
   border: 2px solid rgba(0, 79, 47, 0.22);
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(204, 76, 40, 0.96), rgba(180, 60, 28, 0.96));
+  background: linear-gradient(
+    180deg,
+    rgba(204, 76, 40, 0.96),
+    rgba(180, 60, 28, 0.96)
+  );
   color: #fffdf6;
   font: inherit;
-  font-weight: 700;
+  font-family: var(--ui-font);
+  font-weight: 800;
   cursor: pointer;
   box-shadow: 0 14px 24px rgba(204, 76, 40, 0.18);
 }
 
 .end-summary {
-  position: absolute;
-  inset: 16px;
-  z-index: 3;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
   display: grid;
   place-items: center;
-  padding: 24px;
-  background: rgba(0, 79, 47, 0.18);
-  backdrop-filter: blur(4px);
-  overflow: hidden;
+  padding: 28px 20px;
+  background: rgba(14, 34, 24, 0.38);
+  backdrop-filter: blur(8px);
+  overflow-y: auto;
   opacity: 0;
   transition: opacity 240ms ease;
 }
@@ -252,18 +341,28 @@ canvas {
 .end-summary-dialog {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  padding: 24px 28px;
+  gap: 20px;
+  width: min(940px, calc(100vw - 40px));
+  max-height: min(88dvh, 820px);
+  padding: 38px 34px 32px;
   border: 2px solid rgba(0, 79, 47, 0.24);
-  border-radius: 22px;
-  background: linear-gradient(180deg, rgba(244, 240, 224, 0.98) 0%, rgba(235, 245, 237, 0.95) 100%);
+  border-radius: 28px;
+  background: linear-gradient(
+    180deg,
+    rgba(244, 240, 224, 0.98) 0%,
+    rgba(235, 245, 237, 0.95) 100%
+  );
   backdrop-filter: blur(8px);
-  overflow: hidden;
-  width: min(1040px, calc(100% - 8px));
-  max-height: calc(100% - 8px);
+  overflow: auto;
+  box-shadow:
+    0 28px 60px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56);
   transform: translateY(14px) scale(0.985);
-  transition: transform 300ms ease, opacity 300ms ease;
+  transition:
+    transform 300ms ease,
+    opacity 300ms ease;
   opacity: 0;
 }
 
@@ -277,12 +376,13 @@ canvas {
 }
 
 .end-summary-kicker {
-  margin: 0 0 8px;
+  margin: 0;
   color: var(--brand-green);
+  font-family: var(--ui-font);
   font-size: 1.1rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 800;
   text-align: center;
 }
 
@@ -302,7 +402,8 @@ canvas {
   text-align: center;
   color: #244532;
   line-height: 1.45;
-  font-size: clamp(1.05rem, 1.5vw, 1.35rem);
+  font-family: var(--ui-font);
+  font-size: clamp(1.02rem, 1.35vw, 1.25rem);
 }
 
 .fact-slide {
@@ -321,7 +422,8 @@ canvas {
   display: block;
   margin-bottom: 10px;
   color: var(--brand-red);
-  font-size: clamp(0.92rem, 1.15vw, 1.05rem);
+  font-size: clamp(0.86rem, 1vw, 0.98rem);
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -334,8 +436,9 @@ canvas {
   background: rgba(0, 79, 47, 0.08);
   color: var(--brand-green);
   font: inherit;
+  font-family: var(--ui-font);
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
   align-self: center;
 }
@@ -353,8 +456,9 @@ canvas {
 }
 
 .fact-slide-counter {
-  margin: 14px 0 0;
+  margin: 0;
   color: var(--brand-green);
+  font-family: var(--ui-font);
   font-size: 1rem;
   text-align: center;
 }
@@ -364,7 +468,11 @@ canvas {
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 18px;
+  margin-top: 0;
+}
+
+body.summary-open {
+  overflow: hidden;
 }
 
 .play-again-button {
@@ -377,8 +485,9 @@ canvas {
   background: rgba(0, 79, 47, 0.08);
   color: var(--brand-green);
   font: inherit;
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-family: var(--ui-font);
+  font-size: 1.05rem;
+  font-weight: 800;
   cursor: pointer;
 }
 
@@ -396,8 +505,9 @@ canvas {
   border-radius: 999px;
   background: rgb(204, 76, 40);
   color: #ffffff;
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-family: var(--ui-font);
+  font-size: 1.05rem;
+  font-weight: 800;
   text-decoration: none;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
 }
@@ -408,6 +518,81 @@ canvas {
   outline: none;
 }
 
+.friend-button:focus-visible,
+.start-button:focus-visible,
+.jump-button:focus-visible,
+.play-again-button:focus-visible,
+.donate-button:focus-visible,
+.fact-nav-button:focus-visible {
+  outline: 3px solid rgba(204, 76, 40, 0.48);
+  outline-offset: 3px;
+}
+
+@media (min-width: 801px) {
+  .end-summary-kicker {
+    font-size: 1.22rem;
+  }
+
+  .fact-card-label {
+    font-size: 1.04rem;
+  }
+}
+
+@media (max-width: 860px) {
+  .game-shell.is-finished {
+    padding-top: 14px;
+  }
+
+  .game-shell.is-finished h1 {
+    font-size: 1.5rem;
+    margin-bottom: 2px;
+  }
+
+  .game-shell.is-finished .intro,
+  .game-shell.is-finished .friend-picker,
+  .game-shell.is-finished .controls,
+  .game-shell.is-finished .start-row,
+  .game-shell.is-finished .status {
+    display: none;
+  }
+
+  .game-shell.is-finished .runner-chip {
+    margin-bottom: 4px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+
+  .game-shell.is-finished .game-stage {
+    margin-top: 0;
+  }
+
+  .end-summary {
+    inset: 0;
+    z-index: 30;
+    padding: 18px 14px max(24px, env(safe-area-inset-bottom));
+  }
+
+  .end-summary-dialog {
+    width: min(760px, calc(100vw - 28px));
+    max-height: min(86dvh, 720px);
+    gap: 16px;
+    padding: 28px 18px 22px;
+    border-radius: 18px;
+  }
+
+  .fact-slider {
+    gap: 12px;
+  }
+
+  .fact-slide {
+    min-height: 156px;
+  }
+
+  .end-actions {
+    gap: 12px;
+  }
+}
+
 @media (max-width: 700px) {
   body {
     display: block;
@@ -416,17 +601,18 @@ canvas {
 
   .game-shell {
     width: 100%;
-    padding: 10px 8px 12px;
+    min-height: calc(100dvh - 12px);
+    padding: 8px 7px 10px;
     border-radius: 18px;
   }
 
   h1 {
-    font-size: 1.85rem;
+    font-size: 1.75rem;
     line-height: 1;
   }
 
   .intro {
-    margin: 6px auto 8px;
+    margin: 5px auto 8px;
     max-width: 26rem;
     font-size: 0.84rem;
     line-height: 1.28;
@@ -448,21 +634,28 @@ canvas {
     padding: 2px 0 4px;
   }
 
-  .start-row {
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-
   .friend-button {
     width: 100%;
     min-width: 0;
     justify-content: flex-start;
+    min-height: 42px;
     padding: 8px 12px;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
+  }
+
+  .friend-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .start-row {
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
   .start-button {
     width: 100%;
+    min-width: 0;
     padding: 10px 16px;
   }
 
@@ -473,9 +666,51 @@ canvas {
     line-height: 1.25;
   }
 
+  .game-shell.is-countdown h1,
+  .game-shell.is-playing h1,
+  .game-shell.is-paused h1,
+  .game-shell.is-finished h1 {
+    font-size: 1.32rem;
+    margin-bottom: 4px;
+  }
+
+  .game-shell.is-countdown .start-row,
+  .game-shell.is-playing .start-row,
+  .game-shell.is-paused .start-row {
+    margin-bottom: 6px;
+  }
+
+  .game-shell.is-countdown .start-button,
+  .game-shell.is-playing .start-button,
+  .game-shell.is-paused .start-button {
+    width: auto;
+    min-width: 112px;
+    padding: 8px 14px;
+    font-size: 0.88rem;
+  }
+
+  .game-shell.is-countdown .intro,
+  .game-shell.is-playing .intro,
+  .game-shell.is-playing .controls,
+  .game-shell.is-finished .intro,
+  .game-shell.is-finished .controls {
+    display: none;
+  }
+
+  .game-shell.is-countdown .friend-picker,
+  .game-shell.is-playing .friend-picker {
+    display: none;
+  }
+
+  .runner-chip {
+    margin-bottom: 6px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+
   .game-stage {
     width: 100%;
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
   canvas {
@@ -495,18 +730,29 @@ canvas {
     font-size: 0.96rem;
   }
 
+  .status {
+    margin-top: 7px;
+    font-size: 0.84rem;
+  }
+
+  .game-shell.is-countdown .status,
+  .game-shell.is-playing .status,
+  .game-shell.is-finished .status {
+    display: none;
+  }
+
   .end-summary {
-    position: fixed;
-    inset: 8px;
-    padding: 12px 10px max(18px, env(safe-area-inset-bottom));
-    z-index: 10;
+    inset: 0;
+    z-index: 30;
     place-items: center;
+    padding: 12px 10px max(18px, env(safe-area-inset-bottom));
   }
 
   .end-summary-dialog {
     width: 100%;
     max-height: min(78dvh, 640px);
-    padding: 14px 12px;
+    gap: 14px;
+    padding: 18px 12px 16px;
     border-radius: 16px;
   }
 
@@ -535,33 +781,6 @@ canvas {
   .donate-button {
     width: 100%;
   }
-
-  .status {
-    margin-top: 8px;
-    font-size: 0.88rem;
-  }
-
-  .game-shell.is-playing h1,
-  .game-shell.is-finished h1 {
-    font-size: 1.55rem;
-  }
-
-  .game-shell.is-playing .intro,
-  .game-shell.is-playing .controls,
-  .game-shell.is-playing .status,
-  .game-shell.is-finished .intro,
-  .game-shell.is-finished .controls {
-    display: none;
-  }
-
-  .game-shell.is-playing .friend-picker,
-  .game-shell.is-finished .friend-picker {
-    margin-bottom: 6px;
-  }
-
-  .game-shell.is-finished .status {
-    display: none;
-  }
 }
 
 @media (max-width: 460px) {
@@ -570,6 +789,7 @@ canvas {
   }
 
   .game-shell {
+    min-height: calc(100dvh - 8px);
     padding: 8px 6px 10px;
     border-radius: 14px;
   }
@@ -587,7 +807,7 @@ canvas {
 
   .friend-button {
     gap: 8px;
-    font-size: 0.88rem;
+    font-size: 0.84rem;
   }
 
   .friend-icon {
@@ -602,6 +822,24 @@ canvas {
     padding: 11px 14px;
   }
 
+  .game-shell.is-countdown h1,
+  .game-shell.is-playing h1,
+  .game-shell.is-paused h1,
+  .game-shell.is-finished h1 {
+    font-size: 1.18rem;
+  }
+
+  .game-shell.is-countdown .start-button,
+  .game-shell.is-playing .start-button,
+  .game-shell.is-paused .start-button {
+    padding: 7px 12px;
+    font-size: 0.82rem;
+  }
+
+  .runner-chip {
+    font-size: 0.76rem;
+  }
+
   .fact-card {
     padding: 10px 11px;
     font-size: 0.9rem;
@@ -612,20 +850,16 @@ canvas {
     font-size: 0.76rem;
   }
 
-  .game-shell.is-playing h1,
-  .game-shell.is-finished h1 {
-    font-size: 1.4rem;
-  }
-
   .end-summary {
-    inset: 6px;
+    inset: 0;
     padding: 10px 8px max(16px, env(safe-area-inset-bottom));
   }
 
   .end-summary-dialog {
     max-height: min(82dvh, 680px);
     margin: auto 0;
-    padding: 14px 10px;
+    gap: 12px;
+    padding: 16px 10px 14px;
   }
 
   .fact-slide {

@@ -16,7 +16,7 @@ ctx.imageSmoothingEnabled = true;
 
 const slugSprite = new Image();
 let slugSpriteReady = false;
-slugSprite.src = 'slug.png';
+slugSprite.src = 'banana_slug.png';
 slugSprite.onload = () => {
   slugSpriteReady = true;
 };
@@ -64,6 +64,26 @@ treeSprite.onerror = () => {
   treeSpriteReady = false;
 };
 
+const newTreeSprite = new Image();
+let newTreeSpriteReady = false;
+newTreeSprite.src = 'new_tree.png';
+newTreeSprite.onload = () => {
+  newTreeSpriteReady = true;
+};
+newTreeSprite.onerror = () => {
+  newTreeSpriteReady = false;
+};
+
+const multipleTreesSprite = new Image();
+let multipleTreesSpriteReady = false;
+multipleTreesSprite.src = 'multipletrees.png';
+multipleTreesSprite.onload = () => {
+  multipleTreesSpriteReady = true;
+};
+multipleTreesSprite.onerror = () => {
+  multipleTreesSpriteReady = false;
+};
+
 const bushSprite = new Image();
 let bushSpriteReady = false;
 bushSprite.src = 'bush.png';
@@ -78,8 +98,11 @@ const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
 const GROUND_Y = 344;
 const BRIDGE_TOP = 314;
-const GAME_SECONDS = 35;
+const GAME_SECONDS = 60;
 const TARGET_FACTS = 10;
+const RUNNER_SPRITE_SCALE_MULTIPLIER = 2;
+const FACT_PICKUP_SCALE_MULTIPLIER = 1.5;
+const TREE_DENSITY_MULTIPLIER = 1.1;
 
 const baseWorldSpeed = 254;
 const gravity = 1900;
@@ -218,15 +241,15 @@ function syncUiState() {
     !mobileJumpHintVisible || gameState === 'won' || gameState === 'lost' || gameState === 'paused' || gameState === 'countdown';
 
   if (gameState === 'ready') {
-    startButton.textContent = 'Start Trail Adventure';
+    startButton.textContent = 'Start';
   } else if (gameState === 'playing') {
-    startButton.textContent = 'Pause Trail Adventure';
+    startButton.textContent = 'Pause';
   } else if (gameState === 'paused') {
-    startButton.textContent = 'Resume Trail Adventure';
+    startButton.textContent = 'Resume';
   } else if (gameState === 'countdown') {
     startButton.textContent = 'Get Ready';
   } else {
-    startButton.textContent = 'Start Trail Adventure';
+    startButton.textContent = 'Start';
   }
 }
 
@@ -278,6 +301,30 @@ const sceneThemes = [
     frontTreeAlpha: 0.62,
     backTreeAlpha: 0.38,
     farTreeAlpha: 0.18,
+  },
+  {
+    label: 'Golden Canopy',
+    sceneKey: 'sunny',
+    skyTop: '#6b98be',
+    skyMid: '#a7c9d8',
+    skyBottom: '#f4d8a8',
+    hazeTop: '#fff0d100',
+    hazeBottom: '#f5dcb59c',
+    sunX: 752,
+    sunY: 74,
+    sunCore: '#ffe8add8',
+    mountainFarTop: '#9aad8f',
+    mountainFarBottom: '#7d9075',
+    mountainNearTop: '#61775c',
+    mountainNearBottom: '#455842',
+    meadowTop: '#93b766',
+    meadowBottom: '#65894c',
+    trailTop: '#b07a4e',
+    trailMid: '#8b5d3d',
+    trailBottom: '#6d4732',
+    frontTreeAlpha: 0.65,
+    backTreeAlpha: 0.4,
+    farTreeAlpha: 0.19,
   },
   {
     label: 'Sunny Refuge',
@@ -352,40 +399,40 @@ function blendThemes(themeA, themeB, amount) {
 
 function getSceneTheme() {
   const elapsed = GAME_SECONDS - timeLeft;
-  const sceneLength = GAME_SECONDS / 3;
-  const firstBoundary = sceneLength;
-  const secondBoundary = sceneLength * 2;
-  const transitionSpan = 3.2;
+  const sceneLength = GAME_SECONDS / sceneThemes.length;
+  const transitionSpan = 5;
 
-  if (elapsed < firstBoundary) {
-    if (elapsed > firstBoundary - transitionSpan) {
-      const amount = smoothStep((elapsed - (firstBoundary - transitionSpan)) / transitionSpan);
-      return blendThemes(sceneThemes[0], sceneThemes[1], amount);
+  for (let i = 0; i < sceneThemes.length; i += 1) {
+    const boundary = sceneLength * (i + 1);
+    const currentTheme = sceneThemes[i];
+    const nextTheme = sceneThemes[i + 1];
+
+    if (elapsed < boundary) {
+      if (nextTheme && elapsed > boundary - transitionSpan) {
+        const amount = smoothStep((elapsed - (boundary - transitionSpan)) / transitionSpan);
+        return blendThemes(currentTheme, nextTheme, amount);
+      }
+      return currentTheme;
     }
-    return sceneThemes[0];
   }
 
-  if (elapsed < secondBoundary) {
-    if (elapsed > secondBoundary - transitionSpan) {
-      const amount = smoothStep((elapsed - (secondBoundary - transitionSpan)) / transitionSpan);
-      return blendThemes(sceneThemes[1], sceneThemes[2], amount);
-    }
-    return sceneThemes[1];
-  }
-
-  return sceneThemes[2];
+  return sceneThemes[sceneThemes.length - 1];
 }
 
 function getCurrentSpeed() {
   const elapsed = GAME_SECONDS - timeLeft;
-  const sceneLength = GAME_SECONDS / 3;
+  const sceneLength = GAME_SECONDS / sceneThemes.length;
 
   if (elapsed < sceneLength) {
     return baseWorldSpeed;
   }
 
   if (elapsed < sceneLength * 2) {
-    return baseWorldSpeed * 1.1;
+    return baseWorldSpeed * 1.06;
+  }
+
+  if (elapsed < sceneLength * 3) {
+    return baseWorldSpeed * 1.13;
   }
 
   return baseWorldSpeed * 1.2;
@@ -400,27 +447,39 @@ function getDistanceForTime(seconds) {
   return seconds * baseWorldSpeed;
 }
 
+function getFactRespawnX(factId) {
+  const furthestPickupX = factPickups.reduce((maxX, pickup) => (
+    pickup.active ? Math.max(maxX, pickup.x + pickup.w) : maxX
+  ), WIDTH + 40);
+  const furthestHazardX = waterHazards.reduce((maxX, hazard) => (
+    hazard.active ? Math.max(maxX, hazard.x + hazard.w) : maxX
+  ), WIDTH + 40);
+  const spacing = 150 + (factId % 3) * 55;
+
+  return Math.max(furthestPickupX, furthestHazardX) + spacing;
+}
+
 function renderEndSummary() {
   if (gameState === 'playing' || gameState === 'ready') {
     endSummaryEl.hidden = true;
     endSummaryEl.classList.remove('is-visible');
+    document.body.classList.remove('summary-open');
     syncUiState();
     return;
   }
 
   endSummaryEl.hidden = false;
-  summarySlides = activeFacts
-    .filter((_, index) => unlockedFacts.includes(index))
-    .map((fact) => ({
-      label: fact.label,
-      text: fact.text,
-    }));
+  document.body.classList.add('summary-open');
+  summarySlides = activeFacts.map((fact) => ({
+    label: fact.label,
+    text: fact.text,
+  }));
 
   if (summarySlides.length === 0) {
     summarySlides = [
       {
         label: 'Keep Exploring',
-        text: 'You did not collect a fact this run. Try again and discover up to 10 redwood and wildlife facts.',
+        text: 'This trail did not generate any facts. Try again and discover 10 redwood and wildlife facts.',
       },
     ];
   }
@@ -440,6 +499,7 @@ function hideEndSummary() {
   }
   endSummaryEl.classList.remove('is-visible');
   endSummaryEl.hidden = true;
+  document.body.classList.remove('summary-open');
   syncUiState();
 }
 
@@ -469,12 +529,16 @@ function setRunner(nextRunner) {
   friendButtons.forEach((button) => {
     button.classList.toggle('is-active', button.dataset.runner === nextRunner);
   });
+
+  if (gameState === 'ready') {
+    setupLevel();
+  }
 }
 
 function startGame() {
   if (gameState === 'playing') {
     gameState = 'paused';
-    statusEl.textContent = 'Trail paused. Press Resume, P, or Escape to keep going.';
+    statusEl.textContent = 'Trail paused.';
     syncUiState();
     return;
   }
@@ -528,13 +592,24 @@ function buildFactRun() {
   return facts.slice(0, TARGET_FACTS);
 }
 
+function getPickupHeights() {
+  const woodratOffset = selectedRunner === 'woodrat' ? 26 : 0;
+
+  return [
+    BRIDGE_TOP - 24 - woodratOffset,
+    BRIDGE_TOP - 54 - woodratOffset,
+    BRIDGE_TOP - 88 - woodratOffset,
+    BRIDGE_TOP - 120 - woodratOffset,
+  ];
+}
+
 function setupLevel() {
   factPickups.length = 0;
   waterHazards.length = 0;
   activeFacts = buildFactRun();
   const factEncounterX = slug.x + slug.w;
   const hazardEncounterX = slug.x + slug.w - 10;
-  const pickupHeights = [BRIDGE_TOP - 24, BRIDGE_TOP - 54, BRIDGE_TOP - 88, BRIDGE_TOP - 120];
+  const pickupHeights = getPickupHeights();
   const guaranteedGroundFactIds = new Set([0, 3, 6, 8]);
   let factIndex = 0;
 
@@ -692,6 +767,31 @@ function intersectsRectRect(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
+function getFactCollectionRect() {
+  const runnerPickupZones = {
+    slug: { left: 16, top: 34, right: 26, bottom: 14 },
+    bobcat: { left: 20, top: 54, right: 30, bottom: 16 },
+    falcon: { left: 24, top: 52, right: 32, bottom: 18 },
+    woodrat: { left: 18, top: 48, right: 28, bottom: 16 },
+  };
+  const zone = runnerPickupZones[selectedRunner] || runnerPickupZones.slug;
+
+  return {
+    x: slug.x - zone.left,
+    y: slug.y - zone.top,
+    w: slug.w + zone.left + zone.right,
+    h: slug.h + zone.top + zone.bottom,
+  };
+}
+
+function getHudRunnerName() {
+  if (window.innerWidth <= 700 && selectedRunner === 'woodrat') {
+    return 'Woodrat';
+  }
+
+  return runnerNames[selectedRunner];
+}
+
 function update(dt) {
   if (gameState === 'countdown') {
     countdownTimeLeft = Math.max(0, countdownTimeLeft - dt);
@@ -731,12 +831,16 @@ function update(dt) {
 
     fact.x -= baseWorldSpeed * dt;
     if (fact.x + fact.w < 0) {
-      fact.active = false;
+      if (unlockedFacts.includes(fact.id)) {
+        fact.active = false;
+      } else {
+        fact.x = getFactRespawnX(fact.id);
+      }
       continue;
     }
 
-    const slugRect = { x: slug.x, y: slug.y, w: slug.w, h: slug.h };
-    if (intersectsRectRect(fact, slugRect)) {
+    const factCollectionRect = getFactCollectionRect();
+    if (intersectsRectRect(fact, factCollectionRect)) {
       fact.active = false;
       if (!unlockedFacts.includes(fact.id)) {
         unlockedFacts.push(fact.id);
@@ -776,8 +880,8 @@ function update(dt) {
       slug.onGround = false;
       statusEl.textContent =
         hazard.type === 'creek'
-          ? `Splash! Jump the creek to save time. ${unlockedFacts.length}/${TARGET_FACTS} facts found.`
-          : `Bump! Hop over the bushes to stay quick. ${unlockedFacts.length}/${TARGET_FACTS} facts found.`;
+          ? `Splash! ${unlockedFacts.length}/${TARGET_FACTS} facts found.`
+          : `Bump! ${unlockedFacts.length}/${TARGET_FACTS} facts found.`;
     }
   }
 
@@ -986,38 +1090,50 @@ function drawBackground() {
   ctx.closePath();
   ctx.fill();
 
-  const treeOffsetBackFar = (worldOffset * 0.2 * motionFactor) % 150;
-  for (let i = -1; i < 9; i += 1) {
-    drawRedwood(i * 150 + 30 - treeOffsetBackFar, 238, 0.95, theme.farTreeAlpha, i % 2 === 0 ? -0.12 : 0.08);
+  const backFarSpacing = 150 / TREE_DENSITY_MULTIPLIER;
+  const treeOffsetBackFar = (worldOffset * 0.2 * motionFactor) % backFarSpacing;
+  for (let i = -2; i < 13; i += 1) {
+    drawRedwood(i * backFarSpacing + 30 - treeOffsetBackFar, 238, 0.95, theme.farTreeAlpha, i % 2 === 0 ? -0.12 : 0.08);
   }
 
-  const treeOffsetBack = (worldOffset * 0.35 * motionFactor) % 126;
-  for (let i = -1; i < 10; i += 1) {
-    drawRedwood(i * 126 + 40 - treeOffsetBack, 250, 1.18, theme.backTreeAlpha, i % 3 === 0 ? -0.1 : 0.06);
+  const backSpacing = 126 / TREE_DENSITY_MULTIPLIER;
+  const treeOffsetBack = (worldOffset * 0.35 * motionFactor) % backSpacing;
+  for (let i = -2; i < 15; i += 1) {
+    drawRedwood(i * backSpacing + 40 - treeOffsetBack, 250, 1.18, theme.backTreeAlpha, i % 3 === 0 ? -0.1 : 0.06);
   }
 
-  const treeOffsetFront = (worldOffset * 0.55 * motionFactor) % 102;
-  for (let i = -1; i < 12; i += 1) {
-    drawRedwood(i * 102 + 18 - treeOffsetFront, 270, 1.28, theme.frontTreeAlpha, i % 2 === 0 ? 0.08 : -0.06);
+  const frontSpacing = 102 / TREE_DENSITY_MULTIPLIER;
+  const treeOffsetFront = (worldOffset * 0.55 * motionFactor) % frontSpacing;
+  for (let i = -2; i < 18; i += 1) {
+    drawRedwood(i * frontSpacing + 18 - treeOffsetFront, 270, 1.28, theme.frontTreeAlpha, i % 2 === 0 ? 0.08 : -0.06);
   }
 
-  if (treeSpriteReady) {
-    const singleTreeOffset = (worldOffset * 0.48 * motionFactor) % 188;
-    const singleTreeAlpha = theme.sceneKey === 'grove' ? 0.48 : theme.sceneKey === 'mountain' ? 0.3 : 0.16;
-    const singleTreeWidth = theme.sceneKey === 'grove' ? 112 : 98;
-    const singleTreeHeight = theme.sceneKey === 'grove' ? 196 : 172;
+  if (treeSpriteReady || newTreeSpriteReady || multipleTreesSpriteReady) {
+    const singleTreeSpacing = 188 / TREE_DENSITY_MULTIPLIER;
+    const singleTreeOffset = (worldOffset * 0.48 * motionFactor) % singleTreeSpacing;
+    const singleTreeAlpha = theme.sceneKey === 'grove' ? 0.72 : theme.sceneKey === 'mountain' ? 0.46 : 0.3;
+    const singleTreeWidth = theme.sceneKey === 'grove' ? 126 : 108;
+    const singleTreeHeight = theme.sceneKey === 'grove' ? 212 : 184;
     const baseY = theme.sceneKey === 'grove' ? 278 : 270;
     const clusterOffsets = [
-      { x: -36, y: 4, scale: 0.9, alpha: 0.72 },
-      { x: -10, y: -6, scale: 1, alpha: 1 },
-      { x: 18, y: 2, scale: 0.92, alpha: 0.76 },
-      { x: 42, y: -10, scale: 0.82, alpha: 0.58 },
+      { x: -44, y: 6, scale: 0.94, alpha: 0.74 },
+      { x: -8, y: -4, scale: 1.02, alpha: 1 },
+      { x: 30, y: 4, scale: 0.9, alpha: 0.78 },
     ];
-    for (let i = -1; i < 7; i += 1) {
-      const clusterX = i * 188 + 24 - singleTreeOffset;
+    for (let i = -2; i < 11; i += 1) {
+      const clusterX = i * singleTreeSpacing + 24 - singleTreeOffset;
       clusterOffsets.forEach((offset) => {
+        const useNewTree = newTreeSpriteReady && i % 4 === 0 && offset.scale >= 1;
+        const treeImage = useNewTree
+          ? newTreeSprite
+          : multipleTreesSpriteReady
+            ? multipleTreesSprite
+            : treeSprite;
+        if (!treeImage) {
+          return;
+        }
         drawForestSprite(
-          treeSprite,
+          treeImage,
           clusterX + offset.x,
           baseY + offset.y,
           singleTreeWidth * offset.scale,
@@ -1095,17 +1211,19 @@ function drawFactPickups() {
     const spin = -(pulseTime * 1.6 + fact.x * 0.008);
     const x = fact.x + fact.w / 2;
     const y = fact.y + fact.h / 2 + bob;
-    const glow = ctx.createRadialGradient(x, y, 2, x, y, 22);
+    const glowRadius = 22 * FACT_PICKUP_SCALE_MULTIPLIER;
+    const glow = ctx.createRadialGradient(x, y, 2, x, y, glowRadius);
     glow.addColorStop(0, '#dff5c2cc');
     glow.addColorStop(1, '#dff5c200');
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(x, y, 22, 0, Math.PI * 2);
+    ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(spin);
+    ctx.scale(FACT_PICKUP_SCALE_MULTIPLIER, FACT_PICKUP_SCALE_MULTIPLIER);
     ctx.fillStyle = '#f1ead6';
     ctx.fillRect(-11, -14, 22, 28);
     ctx.fillStyle = '#d9ccac';
@@ -1130,26 +1248,21 @@ function drawWaterHazards() {
     }
 
     if (hazard.type === 'bush') {
-      ctx.fillStyle = '#00000024';
-      ctx.beginPath();
-      ctx.ellipse(hazard.x + hazard.w * 0.5, hazard.y + hazard.h + 6, hazard.w * 0.4, 8, 0, 0, Math.PI * 2);
-      ctx.fill();
-
       if (bushSpriteReady) {
-        ctx.drawImage(bushSprite, hazard.x - 12, hazard.y - 18, hazard.w + 24, hazard.h + 24);
+        ctx.drawImage(bushSprite, hazard.x - 12, hazard.y - 8, hazard.w + 24, hazard.h + 24);
       } else {
         ctx.fillStyle = '#436d34';
         ctx.beginPath();
-        ctx.arc(hazard.x + 18, hazard.y + 34, 18, Math.PI, 0);
-        ctx.arc(hazard.x + 38, hazard.y + 22, 22, Math.PI, 0);
-        ctx.arc(hazard.x + 60, hazard.y + 30, 18, Math.PI, 0);
+        ctx.arc(hazard.x + 18, hazard.y + 42, 18, Math.PI, 0);
+        ctx.arc(hazard.x + 38, hazard.y + 30, 22, Math.PI, 0);
+        ctx.arc(hazard.x + 60, hazard.y + 38, 18, Math.PI, 0);
         ctx.closePath();
         ctx.fill();
         ctx.fillStyle = '#7ab257';
         ctx.beginPath();
-        ctx.arc(hazard.x + 20, hazard.y + 28, 12, Math.PI, 0);
-        ctx.arc(hazard.x + 42, hazard.y + 16, 15, Math.PI, 0);
-        ctx.arc(hazard.x + 62, hazard.y + 24, 11, Math.PI, 0);
+        ctx.arc(hazard.x + 20, hazard.y + 36, 12, Math.PI, 0);
+        ctx.arc(hazard.x + 42, hazard.y + 24, 15, Math.PI, 0);
+        ctx.arc(hazard.x + 62, hazard.y + 32, 11, Math.PI, 0);
         ctx.closePath();
         ctx.fill();
       }
@@ -1194,18 +1307,14 @@ function drawBobcat() {
   const y = slug.y;
 
   if (bobcatSpriteReady) {
-    const spriteScale = 1.95;
+    const spriteScale = 1.95 * RUNNER_SPRITE_SCALE_MULTIPLIER;
     const baseWidth = slug.w + 28;
     const baseHeight = slug.h + 22;
     const drawWidth = baseWidth * spriteScale;
     const drawHeight = baseHeight * spriteScale;
     const drawX = x - (drawWidth - slug.w) / 2 - 2;
-    const drawY = y + slug.h - drawHeight + 3;
+    const drawY = y + slug.h - drawHeight + 10;
 
-    ctx.fillStyle = '#00000030';
-    ctx.beginPath();
-    ctx.ellipse(x + slug.w * 0.45, y + slug.h - 1, 24, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
     ctx.drawImage(bobcatSprite, drawX, drawY, drawWidth, drawHeight);
     return;
   }
@@ -1213,10 +1322,6 @@ function drawBobcat() {
   const scale = 1.35;
   const bobcatX = x - 6;
   const bobcatY = y - 10;
-  ctx.fillStyle = '#00000028';
-  ctx.beginPath();
-  ctx.ellipse(bobcatX + 28, bobcatY + 38, 24, 7, 0, 0, Math.PI * 2);
-  ctx.fill();
 
   ctx.fillStyle = '#c98d59';
   ctx.fillRect(bobcatX + 4 * scale, bobcatY + 16 * scale, 32 * scale, 14 * scale);
@@ -1241,13 +1346,13 @@ function drawFalcon() {
   const y = slug.y;
 
   if (falconSpriteReady) {
-    const spriteScale = 1.9;
+    const spriteScale = 1.9 * RUNNER_SPRITE_SCALE_MULTIPLIER;
     const baseWidth = slug.w + 24;
     const baseHeight = slug.h + 20;
     const drawWidth = baseWidth * spriteScale;
     const drawHeight = baseHeight * spriteScale;
     const drawX = x - (drawWidth - slug.w) / 2;
-    const drawY = y + slug.h - drawHeight + 4;
+    const drawY = y + slug.h - drawHeight + 9;
 
     ctx.fillStyle = '#0000002b';
     ctx.beginPath();
@@ -1300,18 +1405,14 @@ function drawWoodrat() {
   const y = slug.y;
 
   if (woodratSpriteReady) {
-    const spriteScale = 1.9;
+    const spriteScale = 1.9 * RUNNER_SPRITE_SCALE_MULTIPLIER;
     const baseWidth = slug.w + 26;
     const baseHeight = slug.h + 20;
     const drawWidth = baseWidth * spriteScale;
     const drawHeight = baseHeight * spriteScale;
     const drawX = x - (drawWidth - slug.w) / 2 - 1;
-    const drawY = y + slug.h - drawHeight + 4;
+    const drawY = y + slug.h - drawHeight + 28;
 
-    ctx.fillStyle = '#0000002d';
-    ctx.beginPath();
-    ctx.ellipse(x + slug.w * 0.45, y + slug.h - 1, 23, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
     ctx.drawImage(woodratSprite, drawX, drawY, drawWidth, drawHeight);
     return;
   }
@@ -1319,11 +1420,6 @@ function drawWoodrat() {
   const scale = 1.28;
   const ratX = x - 2;
   const ratY = y - 10;
-
-  ctx.fillStyle = '#00000026';
-  ctx.beginPath();
-  ctx.ellipse(ratX + 28, ratY + 38, 24, 7, 0, 0, Math.PI * 2);
-  ctx.fill();
 
   ctx.fillStyle = '#7b5b45';
   ctx.beginPath();
@@ -1384,19 +1480,14 @@ function drawSlug() {
   const y = slug.y;
 
   if (slugSpriteReady) {
-    const spriteScale = 2.05;
+    const spriteScale = 2.05 * RUNNER_SPRITE_SCALE_MULTIPLIER;
     const baseWidth = slug.w + 24;
     const baseHeight = slug.h + 18;
     const drawWidth = baseWidth * spriteScale;
     const drawHeight = baseHeight * spriteScale;
     const drawX = x - (drawWidth - slug.w) / 2;
-    const drawY = y + slug.h - drawHeight + 2;
+    const drawY = y + slug.h - drawHeight + 32;
 
-    const shadowWidth = slug.w + 24 + Math.abs(slug.vy) * 0.01;
-    ctx.fillStyle = '#00000030';
-    ctx.beginPath();
-    ctx.ellipse(x + slug.w * 0.45, y + slug.h - 1, shadowWidth * 0.4, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
     ctx.drawImage(slugSprite, drawX, drawY, drawWidth, drawHeight);
     return;
   }
@@ -1443,17 +1534,31 @@ function drawHud() {
     return;
   }
 
-  const panelGradient = ctx.createLinearGradient(0, 0, 0, 42);
+  const isMobileHud = window.innerWidth <= 700;
+  const panelHeight = isMobileHud ? 68 : 42;
+  const fontSize = isMobileHud ? 30 : 15;
+  const textY = isMobileHud ? 42 : 25;
+  const panelGradient = ctx.createLinearGradient(0, 0, 0, panelHeight);
   panelGradient.addColorStop(0, 'rgba(15, 27, 22, 0.88)');
   panelGradient.addColorStop(1, 'rgba(15, 27, 22, 0.56)');
   ctx.fillStyle = panelGradient;
-  ctx.fillRect(0, 0, WIDTH, 42);
+  ctx.fillRect(0, 0, WIDTH, panelHeight);
   ctx.fillStyle = '#f4ead1';
-  ctx.font = 'bold 15px Georgia, serif';
-  ctx.fillText(`TIME ${timeLeft.toFixed(1)}s`, 16, 25);
-  ctx.fillText(`FACTS ${unlockedFacts.length}/${TARGET_FACTS}`, 174, 25);
-  ctx.fillText(getSceneTheme().label.toUpperCase(), 332, 25);
-  ctx.fillText(runnerNames[selectedRunner].toUpperCase(), 636, 25);
+  ctx.font = `bold ${fontSize}px Georgia, serif`;
+
+  if (isMobileHud) {
+    ctx.textAlign = 'left';
+    ctx.fillText(`TIME ${timeLeft.toFixed(1)}s`, 16, textY);
+    ctx.fillText(`FACTS ${unlockedFacts.length}/${TARGET_FACTS}`, 248, textY);
+    ctx.textAlign = 'right';
+    ctx.fillText(getHudRunnerName().toUpperCase(), WIDTH - 16, textY);
+    ctx.textAlign = 'start';
+    return;
+  }
+
+  ctx.fillText(`TIME ${timeLeft.toFixed(1)}s`, 16, textY);
+  ctx.fillText(`FACTS ${unlockedFacts.length}/${TARGET_FACTS}`, 174, textY);
+  ctx.fillText(getHudRunnerName().toUpperCase(), 332, textY);
 }
 
 function draw() {
@@ -1476,7 +1581,10 @@ function draw() {
 
   if (gameState === 'countdown') {
     const countdownLabel = countdownTimeLeft > 3 ? '3' : countdownTimeLeft > 2 ? '2' : countdownTimeLeft > 1 ? '1' : 'Go!';
+    const isMobileCountdown = window.innerWidth <= 700;
     const countdownSize = countdownLabel === 'Go!' ? 52 : 76;
+    const getReadySize = isMobileCountdown ? 52 : 20;
+    const getReadyY = isMobileCountdown ? HEIGHT / 2 + 66 : HEIGHT / 2 + 52;
 
     ctx.fillStyle = 'rgba(8, 14, 11, 0.2)';
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -1485,8 +1593,8 @@ function draw() {
     ctx.font = `bold ${countdownSize}px Georgia, serif`;
     ctx.textAlign = 'center';
     ctx.fillText(countdownLabel, WIDTH / 2, HEIGHT / 2 + 10);
-    ctx.font = '20px Georgia, serif';
-    ctx.fillText('Get ready to run', WIDTH / 2, HEIGHT / 2 + 52);
+    ctx.font = `bold ${getReadySize}px Georgia, serif`;
+    ctx.fillText('Get ready', WIDTH / 2, getReadyY);
     ctx.textAlign = 'start';
   }
 
@@ -1498,7 +1606,6 @@ function draw() {
     ctx.font = 'bold 30px Georgia, serif';
     ctx.fillText('Trail Paused', WIDTH / 2 - 82, HEIGHT / 2 - 10);
     ctx.font = '18px Georgia, serif';
-    ctx.fillText('Press Resume, P, or Escape to continue', WIDTH / 2 - 164, HEIGHT / 2 + 22);
   }
 }
 
